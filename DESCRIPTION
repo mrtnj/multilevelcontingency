@@ -1,11 +1,26 @@
 Package: multilevelcontingency
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Title: An rstan model for groups of related contingency tables
+Version: 0.0.0.9000
+Author: Martin Johnsson
+Maintainer: Martin Johnsson <sorill@gmail.com>
+Description: A multilevel binomial--beta model for groups of contingency tables implemented in rstan.
+Depends:
+    R (>= 3.0.2),
+    Rcpp (>= 0.12.10),
+    methods
+Imports:
+    rstan (>= 2.15.1),
+    rstantools,
+    ggplot2
+LinkingTo:
+    StanHeaders (>= 2.15.0.1),
+    rstan (>= 2.15.1),
+    BH (>= 1.62.0.1),
+    Rcpp (>= 0.12.10),
+    RcppEigen (>= 0.3.3.3.0)
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
+NeedsCompilation: yes
+RoxygenNote: 6.0.1

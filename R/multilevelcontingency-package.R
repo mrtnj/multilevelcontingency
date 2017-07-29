@@ -1,0 +1,1 @@
+#' @useDynLib rstanarm, .registration = TRUE
