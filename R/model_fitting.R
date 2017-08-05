@@ -3,7 +3,7 @@
 #' This convenience function turns a list of 2 x 2 matrices into a data frame.
 #' There should be two columns each containing a group. The first row should
 #' contain the number of successes, and the second row the number of tries.
-#' 
+#'
 #' @param ctables a list of matrices or data frames
 #' @return A data frame where each row corresponds to a contingency table.
 tables_to_df <- function(ctables) {
@@ -18,7 +18,7 @@ tables_to_df <- function(ctables) {
 }
 
 #' Fit the multilevel model
-#' 
+#'
 #' @param tables_df A data frame with columsn yA (successes group A),
 #'    nA (tries group A), yB (successes group B), and nB (tries group B).
 #' @return A stanfit object.
@@ -29,23 +29,36 @@ fit_model <- function(tables_df) {
                                 nA = tables_df$nA,
                                 yB = tables_df$yB,
                                 nB = tables_df$nB),
-                    control = list(adapt_delta = 0.9))
+                    control = list(adapt_delta = 0.95))
 }
 
-#' Simulate fake data
-#' 
-#' @param alpha true parameter of prior Beta-distribution
-#' @param beta true parameter of prior Beta-distribution
+#' Simulate fake data with a fixed difference between groups
+#'
+#' The function can either simulate the groups from one beta distribution
+#' and setting afixed difference (delta) between them, or by drawing from
+#' two different Beta distributions. Set delta to NULL and give parameter
+#' values for (alphaB, betaB) to activate the second behaviour.
+#'
+#' @param alphaA true parameter of prior Beta-distribution for group A
+#' @param betaA true parameter of prior Beta-distribution for group A
 #' @param delta true difference in probability between groups
+#' @param alphaB true parameter of prior Beta-distribution for group B
+#' @param betaB true parameter of prior Beta-distribution for group B
 #' @param N number of contingency tables
 #' @param nA number of tries group A
 #' @param nB number of tries group B
 #' @return Data frame of fake data and true probabilities
-sim_tables <- function(alpha = 0.5, beta = 5, delta = 0.1,
+sim_tables <- function(alphaA = 0.5, betaA = 5, delta = 0.1,
+                       alphaB = NULL, betaB = NULL,
                        N = 10, nA = 10000, nB = 100) {
 
-  pA <- rbeta(N, alpha, beta)
-  pB <- pA + delta
+  if (is.null(delta)) {
+    pA <- rbeta(N, alphaA, betaA)
+    pB <- rbeta(N, alphaB, betaB)
+  } else {
+    pA <- rbeta(N, alphaA, betaA)
+    pB <- pA + delta
+  }
 
   data.frame(yA = rbinom(N, nA, pA),
              yB = rbinom(N, nB, pB),
