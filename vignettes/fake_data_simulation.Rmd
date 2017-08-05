@@ -1,0 +1,85 @@
+---
+title: "Multilevel contingency table model on simulated fake data"
+author: "Martin Johnsson"
+date: "2017-08-05"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+We will demonstrate the model by simulating fake data and fitting the model to it.
+
+
+## Fake data simulation
+
+The package contains a simple function that lets us simulate data from the assumed model
+and a related model that assumes a fixed difference in probability between
+the two groups.
+
+```{r}
+data <- sim_tables(alphaA = 0.5, betaA = 2,
+                   alphaB = 0.7, betaB = 5,
+                   delta = NULL)
+```
+
+The data frame look like this, which is the format the that the model fitting expects,
+with two additional columns containing the true differences in probability between the
+groups.
+
+```{r}
+data
+```
+
+
+## Model fitting
+
+The rstan model has been compiled on package installation. We can run it with this function:
+
+```{r}
+model <- fit_model(data)
+```
+
+Sampling uses the stan default of four chains of 2000 samples each, 1000 of which are discarded
+as warmup. The only difference is that, similar to rstanarm, the adapt_delta parameter has been
+increased to 0.95.
+
+
+## Results
+
+The result is a stanfit object, so we can then use all the nice rstan summary and plotting
+functions on it. Here, for example are the estimated probabilities for both groups and each
+of the ten tables, their credible intervals, and the diagnostic potential scale reduction factor:
+
+```{r}
+print(model, pars = c("pA", "pB"))
+```
+
+Here are the hyperparameters:
+
+```{r}
+print(model, pars = c("alphaA", "alphaB", "betaA", "betaB"))
+```
+
+And the estimated differences in probability between the groups for each table:
+
+```{r}
+print(model, pars = c("delta", "average_delta"))
+```
+
+We can compare this to the simulated values:
+
+```{r}
+data$pB_true - data$pA_true
+(true_average <- mean(data$pB_true - data$pA_true))
+```
+
+(Note: the ```rstan::``` and ```ggplot2::``` are there to avoid using the ```library``` function in 
+the vignette. In a normal script, you can just load rstan and ggplot2.)
+
+```{r}
+rstan::plot(model, pars = c("delta", "average_delta")) + 
+  ggplot2::geom_vline(xintercept = true_average)
+```
+
