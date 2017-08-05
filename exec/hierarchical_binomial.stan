@@ -2,25 +2,31 @@ data {
     // number of contingency tables
     int N;
     // successes
-    int yA[N]; 
+    int yA[N];
     int yB[N];
     // number of tries
-    int nA[N]; 
+    int nA[N];
     int nB[N];
 }
 parameters {
     vector<lower = 0, upper = 1>[N] pA;
     vector<lower = 0, upper = 1>[N] pB;
-    real<lower = 0> alpha;
-    real<lower = 0> beta;	
+    real<lower = 0> alphaA;
+    real<lower = 0> betaA;
+    real<lower = 0> alphaB;
+    real<lower = 0> betaB;
 }
 model {
     for (i in 1:N) {
         yA[i] ~ binomial(nA[i], pA[i]);
         yB[i] ~ binomial(nB[i], pB[i]);
     }
-    pA ~ beta(alpha, beta);
-    pB ~ beta(alpha, beta);
+    pA ~ beta(alphaA, betaA);
+    pB ~ beta(alphaB, betaB);
+    alphaA ~ normal(0, 1);
+    alphaB ~ normal(0, 1);
+    betaA ~ normal(0, 10);
+    betaB ~ normal(0, 10);
 }
 generated quantities {
     vector[N] delta;
