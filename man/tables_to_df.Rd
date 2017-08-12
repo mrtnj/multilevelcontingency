@@ -7,7 +7,7 @@
 tables_to_df(ctables)
 }
 \arguments{
-\item{ctables}{a list of matrices or data frames}
+\item{ctables}{a list of matrices or data frames.}
 }
 \value{
 A data frame where each row corresponds to a contingency table.
