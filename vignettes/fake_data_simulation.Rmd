@@ -19,37 +19,55 @@ and a related model that assumes a fixed difference in probability between
 the two groups.
 
 ```{r}
-data <- sim_tables(alphaA = 0.5, betaA = 2,
-                   alphaB = 0.7, betaB = 5,
+data <- sim_tables(alphaA = 0.5, betaA = 5,
+                   alphaB = 5, betaB = 0.5,
                    delta = NULL)
 ```
 
-The data frame look like this, which is the format the that the model fitting expects,
-with two additional columns containing the true differences in probability between the
-groups.
+The data frame look like this, which is the format that the model fitting expects,
+with two additional columns containing the true probabilities for each group.
 
 ```{r}
 data
 ```
+
+The simulation function looks like this -- it first samples the probabilities from beta
+distributions, and then samples the data given those probabilites.
+
+```{r}
+sim_tables
+```
+
 
 
 ## Model fitting
 
 The rstan model has been compiled on package installation. We can run it with this function:
 
-```{r}
+```{r, collapse = TRUE}
 model <- fit_model(data)
 ```
 
 Sampling uses the stan default of four chains of 2000 samples each, 1000 of which are discarded
-as warmup. The only difference is that, similar to rstanarm, the adapt_delta parameter has been
-increased to 0.95.
+as warmup, and no thinning. The only difference is that, similar to rstanarm, the adapt_delta parameter
+has been increased to 0.95. This makes stan take smaller steps when exploring the posterior,
+sacrificing some speed for lower risk of running into numerical problems.
+
+You can change the number of chains and samples by passing ```chains```, ```iter```, and ```warmup```
+to the function as you would in rstan.
+
+As you can see, the ```fit_model``` function is really a very thin wrapper around rstan:
+
+```{r}
+fit_model
+```
+
 
 
 ## Results
 
-The result is a stanfit object, so we can then use all the nice rstan summary and plotting
-functions on it. Here, for example are the estimated probabilities for both groups and each
+The result is a stanfit object, and we can then use all the nice rstan summary and plotting
+functions on it. Here, for example, are the estimated probabilities for both groups and each
 of the ten tables, their credible intervals, and the diagnostic potential scale reduction factor:
 
 ```{r}
