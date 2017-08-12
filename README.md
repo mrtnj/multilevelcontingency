@@ -14,12 +14,13 @@ This package uses the method of rstanarm and the rstantools package to pre-build
 model on installation so that it won't need compiling every time the package loads.
 
 According to my limited testing, one should be able to install the package
-from R by running:
+from R by running the following. Check DESCRIPTION to see the required
+packages and versions.
 
 ```
 devtools::install_github("mrtnj/multilevelcontingency", args = "--preclean")
 ```
 
 *NOTE:* This involves running both bash and C++ code downloaded from this
-repo. Do not do this with unknown code this unless you know that it's not
+repo. Do not do this with unknown code unless you know that it's not
 malicious.
