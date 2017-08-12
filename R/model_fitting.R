@@ -4,7 +4,7 @@
 #' There should be two columns each containing a group. The first row should
 #' contain the number of successes, and the second row the number of tries.
 #'
-#' @param ctables a list of matrices or data frames
+#' @param ctables a list of matrices or data frames.
 #' @return A data frame where each row corresponds to a contingency table.
 tables_to_df <- function(ctables) {
   dfs <- lapply(ctables,
@@ -21,14 +21,18 @@ tables_to_df <- function(ctables) {
 #'
 #' @param tables_df A data frame with columsn yA (successes group A),
 #'    nA (tries group A), yB (successes group B), and nB (tries group B).
+#' @param chains Number of chains to run.
+#' @param iter Number of iterations per chain.
+#' @param warmup Number of iterations per chain to discard as warmup.
 #' @return A stanfit object.
-fit_model <- function(tables_df) {
+fit_model <- function(tables_df, chains = 4, iter = 2000, warmup = 1000) {
     rstan::sampling(stanmodels$hierarchical_binomial,
                     data = list(N = nrow(tables_df),
                                 yA = tables_df$yA,
                                 nA = tables_df$nA,
                                 yB = tables_df$yB,
                                 nB = tables_df$nB),
+                    chains = chains, iter = iter, warmup = warmup,
                     control = list(adapt_delta = 0.95))
 }
 
