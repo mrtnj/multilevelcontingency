@@ -13,4 +13,13 @@ Please note that the package is in 1) in development; and 2) mostly written for 
 This package uses the method of rstanarm and the rstantools package to pre-build the stan
 model on installation so that it won't need compiling every time the package loads.
 
-Installation instructions will appear here when they've been tested.
+According to my limited testing, one should be able to install the package
+from R by running:
+
+```
+devtools::install_github("mrtnj/multilevelcontingency", args = "--preclean")
+```
+
+*NOTE:* This involves running both bash and C++ code downloaded from this
+repo. Do not do this with unknwon code this unless you know that it's not
+malicious.
