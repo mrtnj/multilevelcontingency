@@ -1,0 +1,160 @@
+---
+title: "A multilevel model for groups of contingency tables"
+author: "Martin Johnsson"
+date: "2017-08-12"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+We will illustrate the structure of the model with some examples and plots.
+
+
+## Binomial model for a contingency table
+
+Imagine that we have measured a binary variable in two groups, and we want to know the
+probability of one outcome (in keeping with tradition, we will call it "success", but for no other reason)
+in the groups, and find a posterior for the difference in probability between the
+groups. The data may be 430 successes out of 10,000 in one group, and 11 successes out of 100 in the
+other group.
+
+We can model the number of successes in each group with a binomial distribution with parameters
+the number of observations _n_ and the probability of success _p_. The number of obsevations in
+each group is already known.
+
+We need some priors for the probabilities. The beta distribution is a common choice -- it gives us
+numbers on the 0 to 1 interval, and it can take many different shapes. Look for example at Beta(1, 1),
+a uniform distribution, and the very skewed Beta(1, 0.1) and Beta(0.1, 1)
+
+```{r}
+hist(rbeta(1e6, 1, 1), main = "Beta(1, 1)")
+hist(rbeta(1e6, 0.1, 1), xlim = c(0, 1), main = "Beta(0.1, 1)")
+hist(rbeta(1e6, 1, 0.1), xlim = c(0, 1), main = "Beta(1, 0.1)")
+```
+
+When we only have one table, we cannot make much use of this flexiblity, but it will be more
+useful when we move to a multilevel model. We assume the uniform Beta(1, 1) prior, we can
+write down this model in stan:
+
+```
+data {
+    // successes
+    int yA;
+    int yB;
+    // number of tries
+    int nA;
+    int nB;
+}
+parameters {
+    real <lower = 0, upper = 1> pA;
+    real <lower = 0, upper = 1> pB;
+}
+model {
+    yA ~ binomial(nA, pA);
+    yB ~ binomial(nB, pB);
+
+    pA ~ beta(1, 1);
+    pB ~ beta(1, 1);
+}
+generated quantities {
+    // estimate difference
+    real delta;
+    delta = pB - pA;
+}
+```
+
+This model is included in the package and called "single_binomial". We can fit it with rstan and
+look at the resulting posteriors and credible intervals.
+
+```{r, results = "hide"}
+model <- rstan::sampling(stanmodels$single_binomial,
+                         data = list(yA = 340, nA = 10000, yB = 11, nB = 100))
+```
+
+```{r}
+model
+rstan::plot(model)
+```
+
+A nifty thing about this approach is that we can get a posterior for the
+difference, ```delta```, directly from the samples.
+
+```{r}
+posteriors <- rstan::extract(model)
+hist(posteriors$pA, xlim = c(0, 0.5), main = "Posterior pA")
+hist(posteriors$pB, xlim = c(0, 0.5), main = "Posterior pB")
+hist(posteriors$delta, xlim = c(-0.5, 0.5), main = "Posterior delta")
+```
+
+
+## Extending the model to multiple related contingency tables
+
+Now imagine that we've done the same kind of study multiple times, so that we have a list
+of comparable contingency tables. We would like to take advantage of this fact to borrow
+information between the tables when analysing them.
+
+We can do this by allowing the parameters of the prior beta distributions to vary, and
+estimating their values from the data. We constrain the hyperparameters to take small
+values by placing half-normal priors on them.
+
+The modifications to the model code consist of changing scalar parmeters to vectors, adding
+the ```N``` input for the number of contingency tables, and taking the average of the deltas
+to find the average difference between groups. At the end of the generated quantities,
+there is also a loop for generating simulated data from each posterior draw. This is for
+posterior predictive checking.
+
+```
+data {
+    // number of contingency tables
+    int N;
+    // successes
+    int yA[N];
+    int yB[N];
+    // number of tries
+    int nA[N];
+    int nB[N];
+}
+parameters {
+    vector<lower = 0, upper = 1>[N] pA;
+    vector<lower = 0, upper = 1>[N] pB;
+    real<lower = 0> alphaA;
+    real<lower = 0> betaA;
+    real<lower = 0> alphaB;
+    real<lower = 0> betaB;
+}
+model {
+    for (i in 1:N) {
+        yA[i] ~ binomial(nA[i], pA[i]);
+        yB[i] ~ binomial(nB[i], pB[i]);
+    }
+    pA ~ beta(alphaA, betaA);
+    pB ~ beta(alphaB, betaB);
+    alphaA ~ normal(0, 10);
+    alphaB ~ normal(0, 10);
+    betaA ~ normal(0, 10);
+    betaB ~ normal(0, 10);
+}
+generated quantities {
+    vector[N] delta;
+    real average_pB;
+    real average_pA;
+    real average_delta;
+
+    vector[N] yA_rep;
+    vector[N] yB_rep;
+
+    // estimate average delta
+    delta = pB - pA;
+    average_delta = mean(delta);
+    average_pB = mean(pB);
+    average_pA = mean(pA);
+
+    // posterior predictive check
+    for (i in 1:N) {
+        yA_rep[i] = binomial_rng(nA[i], pA[i]);
+        yB_rep[i] = binomial_rng(nB[i], pB[i]);
+    }
+}
+```
