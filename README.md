@@ -21,5 +21,5 @@ devtools::install_github("mrtnj/multilevelcontingency", args = "--preclean")
 ```
 
 *NOTE:* This involves running both bash and C++ code downloaded from this
-repo. Do not do this with unknwon code this unless you know that it's not
+repo. Do not do this with unknown code this unless you know that it's not
 malicious.
