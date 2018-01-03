@@ -4,7 +4,8 @@
 \alias{fit_model}
 \title{Fit the multilevel model}
 \usage{
-fit_model(tables_df, chains = 4, iter = 2000, warmup = 1000)
+fit_model(tables_df, chains = 4, iter = 2000, warmup = 1000,
+  model = "multilevel")
 }
 \arguments{
 \item{tables_df}{A data frame with columsn yA (successes group A),
@@ -15,6 +16,8 @@ nA (tries group A), yB (successes group B), and nB (tries group B).}
 \item{iter}{Number of iterations per chain.}
 
 \item{warmup}{Number of iterations per chain to discard as warmup.}
+
+\item{model}{Model flavour to fit (multilevel or separate).}
 }
 \value{
 A stanfit object.

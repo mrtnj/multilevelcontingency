@@ -24,16 +24,29 @@ tables_to_df <- function(ctables) {
 #' @param chains Number of chains to run.
 #' @param iter Number of iterations per chain.
 #' @param warmup Number of iterations per chain to discard as warmup.
+#' @param model Model flavour to fit (multilevel or separate).
 #' @return A stanfit object.
-fit_model <- function(tables_df, chains = 4, iter = 2000, warmup = 1000) {
-    rstan::sampling(stanmodels$hierarchical_binomial,
-                    data = list(N = nrow(tables_df),
-                                yA = tables_df$yA,
-                                nA = tables_df$nA,
-                                yB = tables_df$yB,
-                                nB = tables_df$nB),
-                    chains = chains, iter = iter, warmup = warmup,
-                    control = list(adapt_delta = 0.95))
+fit_model <- function(tables_df, chains = 4, iter = 2000, warmup = 1000, model = "multilevel") {
+    if (model == "multilevel") {
+        fit <- rstan::sampling(stanmodels$hierarchical_binomial,
+                               data = list(N = nrow(tables_df),
+                                           yA = tables_df$yA,
+                                           nA = tables_df$nA,
+                                           yB = tables_df$yB,
+                                           nB = tables_df$nB),
+                               chains = chains, iter = iter, warmup = warmup,
+                               control = list(adapt_delta = 0.95, max_treedepth = 15))
+    } else if (model == "separate") {
+        fit <- rstan::sampling(stanmodels$separate_binomial,
+                               data = list(N = nrow(tables_df),
+                                          yA = tables_df$yA,
+                                          nA = tables_df$nA,
+                                          yB = tables_df$yB,
+                                          nB = tables_df$nB),
+                               chains = chains, iter = iter, warmup = warmup,
+                               control = list(adapt_delta = 0.95, max_treedepth = 15))
+    }
+    fit
 }
 
 #' Simulate fake data with a fixed difference between groups
